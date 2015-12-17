@@ -8,7 +8,7 @@ import (
 	xmlencoding "encoding/xml"
 	"flag"
 	"fmt"
-	"github.com/andreastt/git"
+	"github.com/andreastt/gitmeta"
 	"github.com/moovweb/gokogiri"
 	"github.com/moovweb/gokogiri/html"
 	"github.com/moovweb/gokogiri/xml"
@@ -56,7 +56,7 @@ type chardata struct {
 }
 
 func createEntry(path string) (*entry, error) {
-	repo, err := git.Repo("/Users/ato/Code/sny.no")
+	repo, err := gitmeta.Repo("/Users/ato/Code/sny.no")
 	if err != nil {
 		return nil, err
 	}
