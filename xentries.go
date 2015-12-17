@@ -4,19 +4,19 @@
 package main
 
 import (
+	"bytes"
+	xmlencoding "encoding/xml"
 	"flag"
 	"fmt"
-	"os"
-	"time"
-	"bytes"
-	"strings"
-	"github.com/moovweb/gokogiri"
-	"github.com/moovweb/gokogiri/xpath"
 	"github.com/andreastt/git"
-	"io/ioutil"
-	"github.com/moovweb/gokogiri/xml"
+	"github.com/moovweb/gokogiri"
 	"github.com/moovweb/gokogiri/html"
-	xmlencoding "encoding/xml"
+	"github.com/moovweb/gokogiri/xml"
+	"github.com/moovweb/gokogiri/xpath"
+	"io/ioutil"
+	"os"
+	"strings"
+	"time"
 )
 
 var tag = flag.String("t", "", "only include entries with this tag")
@@ -30,16 +30,16 @@ var bodyPath = xpath.Compile(".//body")
 
 type entries struct {
 	Entries []*entry `xml:"entry"`
-	Tag string `xml:"tag,attr,omitempty"`
+	Tag     string   `xml:"tag,attr,omitempty"`
 }
 
 type entry struct {
-	Path string `xml:"path"`
-	Ctime time.Time `xml:"ctime"`
-	Mtime time.Time `xml:"mtime"`
-	Title string `xml:"title"`
-	Tags []string `xml:"tags>tag"`
-	Summary chardata `xml:"summary"`
+	Path    string    `xml:"path"`
+	Ctime   time.Time `xml:"ctime"`
+	Mtime   time.Time `xml:"mtime"`
+	Title   string    `xml:"title"`
+	Tags    []string  `xml:"tags>tag"`
+	Summary chardata  `xml:"summary"`
 }
 
 func (e *entry) tagged(target string) bool {
@@ -63,7 +63,7 @@ func createEntry(path string) (*entry, error) {
 	file := repo.File(path)
 
 	entry := &entry{
-		Path: path,
+		Path:  path,
 		Ctime: file.Ctime(),
 		Mtime: file.Mtime(),
 	}
