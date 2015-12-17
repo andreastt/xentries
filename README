@@ -1,0 +1,52 @@
+XENTRIES
+
+  xentries is a program that extracts and serialises useful metadata
+  from HTML documents, such as entries to a weblog.
+  
+  It produces an XML serialisation of the found entries that can
+  later be used as input for syndication feed post-processing, e.g.
+  through xsltproc.
+
+INPUT
+
+  The program extracts a document's full file path, title, creation-
+  and modification times, tags, and the full content summary.
+
+  Creation- and modification times (ctime and mtime, respectively)
+  are fetched from git.  It is assumed that all input documents
+  live under git revision control.
+
+  Tags are looked for in <meta name=keywords content=foo,bar>
+  elements, where multiple tags can be specified using commas.
+
+  The content summary is basically the rest of the document except
+  <h1>, <address>, and <footer> elements.
+
+USAGE
+
+  The program accepts the following flags and arguments:
+  
+   	[-v] [-t TAG] DOCUMENT [, DOCUMENT]
+
+  The optional -v flag makes the output more verbose.
+
+  The optional -t TAG flag will filter the input documents and only
+  make entries of those marked with the given tag.
+
+  After this you must provide at least one DOCUMENT for the program
+  to act on.
+
+  Typical usage:
+
+  	% xentries -t weblog 2011/first 2012/second | xsltproc feed.xsl - >weblog.atom
+  	
+  This is still work in progress, but it's fully functional.
+
+BUGS
+
+  This is not an example of a good program.  It fills a highly
+  specific personal use case.
+  
+  A better implementation would accept user-defined blocklists,
+  arbitrary templates for what information to extract from the
+  document, and custom output formats.
