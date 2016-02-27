@@ -56,7 +56,7 @@ type chardata struct {
 }
 
 func createEntry(path string) (*entry, error) {
-	repo, err := gitmeta.Repo("/Users/ato/Code/sny.no")
+	repo, err := gitmeta.Repo(path)
 	if err != nil {
 		return nil, err
 	}
@@ -96,11 +96,13 @@ func find(doc *html.HtmlDocument, expr *xpath.Expression) ([]xml.Node, error) {
 }
 
 func findSingle(doc *html.HtmlDocument, expr *xpath.Expression) (xml.Node, error) {
-	if ns, err := find(doc, expr); err != nil {
+	ns, err := find(doc, expr)
+	if err != nil {
 		return nil, err
-	} else {
-		return ns[0], err
+	} else if len(ns) == 0 {
+		return nil, fmt.Errorf("unable to find: %s", expr)
 	}
+	return ns[0], nil
 }
 
 func findString(doc *html.HtmlDocument, expr *xpath.Expression) string {
