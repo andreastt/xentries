@@ -6,15 +6,17 @@ package main
 import (
 	"bytes"
 	xmlencoding "encoding/xml"
+	"errors"
 	"flag"
 	"fmt"
-	"github.com/andreastt/gitmeta"
 	"github.com/moovweb/gokogiri"
 	"github.com/moovweb/gokogiri/html"
 	"github.com/moovweb/gokogiri/xml"
 	"github.com/moovweb/gokogiri/xpath"
+	"gopkg.in/libgit2/git2go.v23"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -55,17 +57,17 @@ type chardata struct {
 	Content []byte `xml:",innerxml"`
 }
 
-func createEntry(path string) (*entry, error) {
-	repo, err := gitmeta.Repo(path)
+func createEntry(repo *git.Repository, path string) (*entry, error) {
+	firstc, err := firstCommit(repo, path)
+	lastc, err := lastCommit(repo, path)
 	if err != nil {
 		return nil, err
 	}
-	file := repo.File(path)
 
 	entry := &entry{
 		Path:  path,
-		Ctime: file.Ctime(),
-		Mtime: file.Mtime(),
+		Ctime: firstc.Author().When,
+		Mtime: lastc.Author().When,
 	}
 
 	f, err := os.Open(path)
@@ -74,7 +76,7 @@ func createEntry(path string) (*entry, error) {
 	}
 	defer f.Close()
 
-	bs, err := ioutil.ReadFile(file.Path)
+	bs, err := ioutil.ReadFile(path)
 	if err != nil {
 		return entry, err
 	}
@@ -167,6 +169,62 @@ func marshal(els []*entry, tag string) []byte {
 	return out
 }
 
+func firstCommit(repo *git.Repository, path string) (*git.Commit, error) {
+	return oneCommit(repo, path, git.SortReverse)
+}
+
+func lastCommit(repo *git.Repository, path string) (*git.Commit, error) {
+	return oneCommit(repo, path, git.SortTime)
+}
+
+func oneCommit(repo *git.Repository, path string, sorting git.SortType) (*git.Commit, error) {
+	walk, err := repo.Walk()
+	walk.Sorting(sorting)
+	walk.PushHead()
+
+	ref, err := repo.Head()
+	if err != nil {
+		return nil, err
+	}
+	head := ref.Target()
+
+	var gi *git.Oid
+	gi = head
+	for {
+		err := walk.Next(gi)
+		if err != nil {
+			return nil, fmt.Errorf("no commit for path: %s", path)
+		}
+
+		commit, err := repo.LookupCommit(gi)
+		if err != nil {
+			return nil, err
+		}
+
+		tree, err := commit.Tree()
+		if err != nil {
+			return nil, err
+		}
+
+		_, err2 := tree.EntryByPath(path)
+		if err2 == nil {
+			return commit, nil
+		}
+	}
+}
+
+func findRepo(path string) (*git.Repository, error) {
+	if !strings.ContainsRune(path, '/') {
+		return nil, errors.New("no such repository")
+	}
+
+	repo, err := git.OpenRepository(path)
+	if err != nil {
+		return findRepo(filepath.Dir(path))
+	}
+	return repo, nil
+}
+
 func main() {
 	flag.Parse()
 
@@ -174,12 +232,18 @@ func main() {
 		die("at least one document required")
 	}
 
+	repop, err := os.Getwd()
+	repo, err := findRepo(repop)
+	if err != nil {
+		die("no repository found for directory: %s", repop)
+	}
+
 	// TODO: do we have to be explicit about len?
 	// TODO: should this be an Entry _copy_ (not pointer?)
 	entries := make([]*entry, flag.NArg())
 	for i, doc := range flag.Args() {
 		info("creating entry for %s", doc)
-		entry, err := createEntry(doc)
+		entry, err := createEntry(repo, doc)
 		if err != nil {
 			warn("unable to create entry %s: %s", doc, err)
 		} else if len(*tag) == 0 || entry.tagged(*tag) {
