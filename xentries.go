@@ -13,7 +13,7 @@ import (
 	"github.com/moovweb/gokogiri/html"
 	"github.com/moovweb/gokogiri/xml"
 	"github.com/moovweb/gokogiri/xpath"
-	"gopkg.in/libgit2/git2go.v23"
+	"gopkg.in/libgit2/git2go.v24"
 	"io/ioutil"
 	"os"
 	"path/filepath"
