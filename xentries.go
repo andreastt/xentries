@@ -24,7 +24,7 @@ import (
 var tag = flag.String("t", "", "only include entries with this tag")
 var verbose = flag.Bool("v", false, "increase verbosity")
 
-var blacklist = []string{"h1", "address", "footer"}
+var blacklist = [...]string{"h1", "address", "footer"}
 
 var titlePath = xpath.Compile(".//title")
 var tagsPath = xpath.Compile(".//head/meta[@name='keywords']/@content")
